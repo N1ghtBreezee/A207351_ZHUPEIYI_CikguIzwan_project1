@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "912039444933",
+    "project_id": "fitnessassistant-31142",
+    "storage_bucket": "fitnessassistant-31142.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:912039444933:android:cf8e296cb9383c35d78bac",
+        "android_client_info": {
+          "package_name": "com.example.a207351_cikguizwan_lab5"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCN9ixXX4ArQpO4pxJG6n6XdxWwmNZRme4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

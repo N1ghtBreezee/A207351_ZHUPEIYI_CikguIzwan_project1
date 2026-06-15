@@ -1,4 +1,4 @@
-package com.example.a207351_cikguizwan_lab4
+package com.example.a207351_cikguizwan_lab5
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -11,10 +11,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
-
 
 val AppShapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),
@@ -24,7 +20,6 @@ val AppShapes = Shapes(
     extraLarge = RoundedCornerShape(24.dp)
 )
 
-// 定义自定义排版，确保应用内文字样式统一
 val AppTypography = Typography(
     headlineLarge = TextStyle(
         fontWeight = FontWeight.Bold,
@@ -45,7 +40,6 @@ val AppTypography = Typography(
     )
 )
 
-// 定义浅色主题的颜色方案
 private val LightColorScheme = lightColorScheme(
     primary = md_theme_light_primary,
     onPrimary = md_theme_light_onPrimary,
@@ -72,7 +66,6 @@ private val LightColorScheme = lightColorScheme(
     outline = md_theme_light_outline,
 )
 
-// 定义深色主题的颜色方案
 private val DarkColorScheme = darkColorScheme(
     primary = md_theme_dark_primary,
     onPrimary = md_theme_dark_onPrimary,
@@ -99,10 +92,6 @@ private val DarkColorScheme = darkColorScheme(
     outline = md_theme_dark_outline,
 )
 
-/**
- * 应用的 Material Theme 包装器
- * 所有 Compose UI 都应该在这个 Composable 内部或其上下文中调用，以确保应用主题。
- */
 @Composable
 fun FitnessAssistantTheme(
     darkTheme: Boolean = false,
@@ -115,11 +104,6 @@ fun FitnessAssistantTheme(
         typography = AppTypography,
         shapes = AppShapes
     ) {
-        // 全局覆盖所有文字颜色
-        CompositionLocalProvider(
-            LocalContentColor provides Color(0xFFCDDC39)  // 所有文字使用主题颜色
-        ) {
-            content()
-        }
+        content()
     }
 }

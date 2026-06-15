@@ -1,6 +1,5 @@
-package com.example.a207351_cikguizwan_lab4.ui.theme
+package com.example.a207351_cikguizwan_lab5.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,34 +8,29 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Color(0xFF6EE27B),
+    secondary = Color(0xFFB7CCB4),
+    tertiary = Color(0xFFA0CFD7),
+    background = Color(0xFF1A1C19),
+    surface = Color(0xFF1E3A5F)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = Color(0xFF006E24),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFF8AFF98),
+    secondary = Color(0xFF50634F),
+    background = Color(0xFFFCFDF6),
+    surface = Color(0xFFE0FFE4)
 )
 
 @Composable
-fun A207351_cikguizwan_lab4Theme(
+fun A207351_cikguizwan_lab5Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -45,14 +39,12 @@ fun A207351_cikguizwan_lab4Theme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
         content = content
     )
 }

@@ -1,4 +1,4 @@
-package com.example.a207351_cikguizwan_lab4
+package com.example.a207351_cikguizwan_lab5
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -17,107 +17,167 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.a207351_cikguizwan_lab5.data.database.UserDatabase
+import com.example.a207351_cikguizwan_lab5.data.repository.UserRepository
+import com.example.a207351_cikguizwan_lab5.ui.screens.*
+import com.example.a207351_cikguizwan_lab5.ui.theme.A207351_cikguizwan_lab5Theme  // ← 注意这里是 ui.theme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            FitnessAssistantTheme(darkTheme = false) {
+            A207351_cikguizwan_lab5Theme(darkTheme = false) {
                 HealthAppWithNavigation()
             }
         }
     }
 }
 
+// ... 其余代码保持不变
+
+// 屏幕导航枚举
+sealed class AppScreen {
+    object MainTabs : AppScreen()
+    object FoodScanner : AppScreen()
+    object NutritionApi : AppScreen()
+    object Community : AppScreen()
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HealthAppWithNavigation() {
-    var selectedIndex by remember { mutableStateOf(0) }
+    var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.MainTabs) }
+    var selectedTabIndex by remember { mutableStateOf(0) }
     var showSettingsDialog by remember { mutableStateOf(false) }
-    val titles = listOf("Workout", "Challenges", "History", "Profile")
 
-    // 获取 ViewModel
-    val viewModel: UserViewModel = viewModel()
+    val titles = listOf("Workout", "Challenges", "History", "Profile", "Scanner", "Nutrition", "Community")
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Fitness Assistant",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                actions = {
-                    IconButton(onClick = { showSettingsDialog = true }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 0.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(65.dp)
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-            ) {
-                titles.forEachIndexed { index, title ->
-                    NavigationBarItem(
-                        selected = selectedIndex == index,
-                        onClick = { selectedIndex = index },
-                        label = {
+    val context = LocalContext.current
+    val database = remember { UserDatabase.getDatabase(context) }
+    val repository = remember { UserRepository(database.userDao()) }
+    val viewModel: UserViewModel = viewModel(factory = UserViewModelFactory(repository))
+
+    val userData by viewModel.userData.collectAsState()
+
+    when (currentScreen) {
+        is AppScreen.MainTabs -> {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
                             Text(
-                                text = title,
-                                fontSize = 12.sp
+                                text = "Fitness Assistant",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         },
-                        icon = {
-                            Text(
-                                text = when (title) {
-                                    "Workout" -> "💪"
-                                    "Challenges" -> "🏆"
-                                    "History" -> "📊"
-                                    "Profile" -> "👤"
-                                    else -> "•"
+                        actions = {
+                            IconButton(onClick = { showSettingsDialog = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = "Settings"
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    )
+                },
+                bottomBar = {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 0.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(75.dp)
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                    ) {
+                        titles.forEachIndexed { index, title ->
+                            NavigationBarItem(
+                                selected = selectedTabIndex == index,
+                                onClick = {
+                                    when (index) {
+                                        4 -> currentScreen = AppScreen.FoodScanner
+                                        5 -> currentScreen = AppScreen.NutritionApi
+                                        6 -> currentScreen = AppScreen.Community
+                                        else -> {
+                                            selectedTabIndex = index
+                                            currentScreen = AppScreen.MainTabs
+                                        }
+                                    }
                                 },
-                                fontSize = 22.sp
+                                label = {
+                                    Text(
+                                        text = title,
+                                        fontSize = 10.sp,
+                                        maxLines = 1
+                                    )
+                                },
+                                icon = {
+                                    Text(
+                                        text = when (title) {
+                                            "Workout" -> "💪"
+                                            "Challenges" -> "🏆"
+                                            "History" -> "📊"
+                                            "Profile" -> "👤"
+                                            "Scanner" -> "📷"
+                                            "Nutrition" -> "🌐"
+                                            "Community" -> "🌍"
+                                            else -> "•"
+                                        },
+                                        fontSize = 22.sp
+                                    )
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    indicatorColor = Color.Transparent,
+                                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                                    selectedTextColor = MaterialTheme.colorScheme.primary
+                                )
                             )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            indicatorColor = Color.Transparent
-                        )
-                    )
+                        }
+                    }
+                }
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    when (selectedTabIndex) {
+                        0 -> TrainingScreen(viewModel)
+                        1 -> ChallengeScreen()
+                        2 -> HistoryScreen()
+                        3 -> ProfileScreen(viewModel)
+                        else -> TrainingScreen(viewModel)
+                    }
                 }
             }
         }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            when (selectedIndex) {
-                0 -> TrainingScreen(viewModel)
-                1 -> ChallengeScreen()
-                2 -> HistoryScreen()
-                3 -> ProfileScreen(viewModel)  // ⭐ 传入 viewModel
-            }
+
+        is AppScreen.FoodScanner -> {
+            FoodScannerScreen(
+                onNavigateBack = { currentScreen = AppScreen.MainTabs }
+            )
+        }
+
+        is AppScreen.NutritionApi -> {
+            NutritionApiScreen(
+                onNavigateBack = { currentScreen = AppScreen.MainTabs }
+            )
+        }
+
+        is AppScreen.Community -> {
+            CommunityScreen(
+                userName = userData.userName,
+                onNavigateBack = { currentScreen = AppScreen.MainTabs }
+            )
         }
     }
 
@@ -133,6 +193,19 @@ fun HealthAppWithNavigation() {
                     Text("• Units", fontSize = 14.sp)
                     Text("• Privacy Policy", fontSize = 14.sp)
                     Text("• About", fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Divider()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "🤖 Features Added:",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text("• Camera Barcode Scanner", fontSize = 11.sp)
+                    Text("• OpenFoodFacts API Integration", fontSize = 11.sp)
+                    Text("• Firebase Cloud Storage", fontSize = 11.sp)
+                    Text("• Room Local Database", fontSize = 11.sp)
                 }
             },
             confirmButton = {
@@ -146,9 +219,7 @@ fun HealthAppWithNavigation() {
 
 @Composable
 fun TrainingScreen(viewModel: UserViewModel) {
-    // 从 ViewModel 读取数据
     val userData by viewModel.userData.collectAsState()
-
     var localUserName by remember { mutableStateOf(userData.userName) }
     var localFitnessGoal by remember { mutableStateOf(userData.fitnessGoal) }
     var greetingMessage by remember { mutableStateOf("") }
@@ -167,17 +238,9 @@ fun TrainingScreen(viewModel: UserViewModel) {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "👋 Welcome to Fitness Assistant",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("👋 Welcome to Fitness Assistant", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Matric No: A207351",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Text("Matric No: A207351", fontSize = 12.sp, fontWeight = FontWeight.Medium)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(
@@ -186,11 +249,7 @@ fun TrainingScreen(viewModel: UserViewModel) {
                         label = { Text("Enter your name") },
                         placeholder = { Text("e.g., John Doe") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.small,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                        )
+                        shape = MaterialTheme.shapes.small
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -201,11 +260,7 @@ fun TrainingScreen(viewModel: UserViewModel) {
                         label = { Text("Your Fitness Goal") },
                         placeholder = { Text("e.g., Lose weight, Gain muscle") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.small,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                        )
+                        shape = MaterialTheme.shapes.small
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -213,7 +268,6 @@ fun TrainingScreen(viewModel: UserViewModel) {
                     Button(
                         onClick = {
                             if (localUserName.isNotBlank()) {
-                                // ⭐ 保存到 ViewModel（跨屏幕共享）
                                 viewModel.updateData(localUserName, localFitnessGoal)
                                 greetingMessage = "Welcome back, $localUserName! 💪 Goal: $localFitnessGoal"
                                 showGreeting = true
@@ -222,22 +276,15 @@ fun TrainingScreen(viewModel: UserViewModel) {
                                 showGreeting = true
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.small,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            "Save Profile",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("Save Profile", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
 
                     if (showGreeting && greetingMessage.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = MaterialTheme.shapes.small,
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                         ) {
                             Row(
@@ -246,11 +293,7 @@ fun TrainingScreen(viewModel: UserViewModel) {
                             ) {
                                 Text(text = if (localUserName.isNotBlank()) "🎉" else "⚠️", fontSize = 20.sp)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = greetingMessage,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                Text(text = greetingMessage, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
@@ -258,7 +301,6 @@ fun TrainingScreen(viewModel: UserViewModel) {
             }
         }
 
-        // ⭐ 显示已保存的 Profile 信息
         item { Spacer(modifier = Modifier.height(16.dp)) }
 
         item {
@@ -272,7 +314,7 @@ fun TrainingScreen(viewModel: UserViewModel) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Name: ${userData.userName.ifEmpty { "Not set yet" }}", fontSize = 14.sp)
                     Text("Goal: ${userData.fitnessGoal.ifEmpty { "Not set yet" }}", fontSize = 14.sp)
-                    Text("💡 Tip: Enter your name and goal above, then they will be saved across all screens!", fontSize = 12.sp)
+                    Text("💡 Tip: Enter your name and goal above, then they will be saved across all screens and survive app restarts!", fontSize = 12.sp)
                 }
             }
         }
@@ -290,19 +332,27 @@ fun TrainingScreen(viewModel: UserViewModel) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Food Log", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text("Consumed 0 kcal", fontSize = 14.sp)
+                        Text("🥗 Today's Nutrition", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text("Track your food intake", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        NutritionItem("Protein (g)", "0")
-                        NutritionItem("Carbs (g)", "0")
-                        NutritionItem("Fat (g)", "0")
-                        NutritionItem("Water (ml)", "0")
+                        NutritionItem("🔥 kcal", "0")
+                        NutritionItem("🥩 Protein", "0g")
+                        NutritionItem("🍚 Carbs", "0g")
+                        NutritionItem("🧈 Fat", "0g")
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "✨ Tip: Use 'Scanner' tab to scan food barcodes and track nutrition!",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
@@ -314,35 +364,42 @@ fun TrainingScreen(viewModel: UserViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                MealButton(icon = "🍳", label = "Breakfast")
-                MealButton(icon = "🍱", label = "Lunch")
-                MealButton(icon = "🍲", label = "Dinner")
-                MealButton(icon = "🍎", label = "Snack")
-                MealButton(icon = "💧", label = "Water")
-                MealButton(icon = "⚖️", label = "Log Weight")
+                MealButton("🍳", "Breakfast")
+                MealButton("🍱", "Lunch")
+                MealButton("🍲", "Dinner")
+                MealButton("🍎", "Snack")
+                MealButton("💧", "Water")
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(24.dp)) }
+        item { Text("Official Plans", fontSize = 16.sp, fontWeight = FontWeight.Medium) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+        item { ExpandableProgramsSection() }
+        item { Spacer(modifier = Modifier.height(24.dp)) }
+        item { Text("Shortcuts", fontSize = 16.sp, fontWeight = FontWeight.Medium) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ShortcutCard("Men's Fat Loss\nShortcut", "Fix belly fat, small muscles, no shape!", MaterialTheme.colorScheme.primaryContainer)
+                ShortcutCard("Women's Fat Loss\nShortcut", "Tighten full body lines, shape a balanced figure!", MaterialTheme.colorScheme.secondaryContainer)
             }
         }
 
         item { Spacer(modifier = Modifier.height(24.dp)) }
         item {
-            Text("Official Plans", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-        }
-        item { Spacer(modifier = Modifier.height(12.dp)) }
-
-        item {
-            ExpandableProgramsSection()
-        }
-
-        item { Spacer(modifier = Modifier.height(24.dp)) }
-        item {
-            Text("Shortcuts", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-        }
-        item { Spacer(modifier = Modifier.height(12.dp)) }
-
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                ShortcutCard("Men's Fat Loss\nShortcut", "Fix belly fat, small muscles, no shape!", MaterialTheme.colorScheme.primaryContainer)
-                ShortcutCard("Women's Fat Loss\nShortcut", "Tighten full body lines, shape a balanced figure!", MaterialTheme.colorScheme.secondaryContainer)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("📱 App Features Summary", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("✅ Room Database - Profile saved locally", fontSize = 11.sp)
+                    Text("✅ Camera Scanner - Scan food barcodes", fontSize = 11.sp)
+                    Text("✅ OpenFoodFacts API - Get nutrition data", fontSize = 11.sp)
+                    Text("✅ Firebase Firestore - Share community workouts", fontSize = 11.sp)
+                }
             }
         }
     }
@@ -351,29 +408,19 @@ fun TrainingScreen(viewModel: UserViewModel) {
 @Composable
 fun ExpandableProgramsSection() {
     var isExpanded by remember { mutableStateOf(false) }
-
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(),
-        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { isExpanded = !isExpanded },
+                modifier = Modifier.fillMaxWidth().clickable { isExpanded = !isExpanded },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "📋 Training Plans (Click to Expand)",
-                    fontWeight = FontWeight.Bold
-                )
+                Text("📋 Training Plans (Click to Expand)", fontWeight = FontWeight.Bold)
                 Text(text = if (isExpanded) "▲" else "▼")
             }
-
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -386,12 +433,6 @@ fun ExpandableProgramsSection() {
                     ProgramButton("Targeted\nAreas")
                     ProgramButton("Muscle Gain\n· Men")
                     ProgramButton("Muscle Gain\n· Women")
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ProgramButton("Bodyweight\nTracking")
-                    ProgramButton("Power-\nlifting")
-                    ProgramButton("Old Plan")
                 }
             }
         }
@@ -428,10 +469,7 @@ fun ProgramButton(label: String) {
         shape = MaterialTheme.shapes.small,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Box(
-            modifier = Modifier.padding(vertical = 12.dp),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
             Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center)
         }
     }
@@ -455,10 +493,7 @@ fun ShortcutCard(title: String, subtitle: String, containerColor: Color) {
 @Composable
 fun ChallengeScreen() {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(40.dp))
@@ -466,7 +501,6 @@ fun ChallengeScreen() {
         Spacer(modifier = Modifier.height(24.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
@@ -474,7 +508,8 @@ fun ChallengeScreen() {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text("• 3 Workouts Per Week", fontSize = 14.sp)
                 Text("• Drink 2L Water Daily", fontSize = 14.sp)
-                Text("• Fat Loss Sprint Camp", fontSize = 14.sp)
+                Text("• Scan 5 Food Items", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
+                Text("• Share 1 Workout on Community", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -483,24 +518,31 @@ fun ChallengeScreen() {
 @Composable
 fun HistoryScreen() {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp)
     ) {
         Spacer(modifier = Modifier.height(40.dp))
         Text("📊 History", style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(24.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("📅 Recent Workouts", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("2026-04-09  Chest Training  45 min", fontSize = 14.sp)
-                Text("2026-04-08  Leg Training  50 min", fontSize = 14.sp)
+                Text("2026-06-14  Chest Training  45 min", fontSize = 14.sp)
+                Text("2026-06-13  Leg Training  50 min", fontSize = 14.sp)
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("📷 Scanned Foods", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Use 'Scanner' tab to scan barcodes and save foods!", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -508,51 +550,24 @@ fun HistoryScreen() {
 
 @Composable
 fun ProfileScreen(viewModel: UserViewModel) {
-    // 从 ViewModel 读取用户数据
     val userData by viewModel.userData.collectAsState()
-
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(40.dp))
-
         Box(
-            modifier = Modifier
-                .size(100.dp)
-                .clip(RoundedCornerShape(50.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer),
+            modifier = Modifier.size(100.dp).clip(RoundedCornerShape(50.dp)).background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
-        ) {
-            Text("👤", fontSize = 50.sp)
-        }
-
+        ) { Text("👤", fontSize = 50.sp) }
         Spacer(modifier = Modifier.height(16.dp))
-
-        // ⭐ 显示从 ViewModel 读取的用户名
-        Text(
-            text = if (userData.userName.isNotEmpty()) userData.userName else "Fitness Enthusiast",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        // ⭐ 显示健身目标
+        Text(text = if (userData.userName.isNotEmpty()) userData.userName else "Fitness Enthusiast", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         if (userData.fitnessGoal.isNotEmpty()) {
-            Text(
-                text = "Goal: ${userData.fitnessGoal}",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Text(text = "Goal: ${userData.fitnessGoal}", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
         }
-
         Spacer(modifier = Modifier.height(24.dp))
-
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
@@ -560,8 +575,6 @@ fun ProfileScreen(viewModel: UserViewModel) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text("Height: 175 cm", fontSize = 16.sp)
                 Text("Weight: 72.5 kg", fontSize = 16.sp)
-
-                // ⭐ 显示保存的用户信息
                 if (userData.userName.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Divider()
@@ -570,15 +583,14 @@ fun ProfileScreen(viewModel: UserViewModel) {
                     Text("Name: ${userData.userName}", fontSize = 14.sp)
                     Text("Goal: ${userData.fitnessGoal}", fontSize = 14.sp)
                 }
+                Spacer(modifier = Modifier.height(12.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("🏆 Achievements", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("• Saved Profile to Room DB", fontSize = 12.sp)
+                Text("• Ready to Scan Barcodes", fontSize = 12.sp)
+                Text("• Ready to Share Workouts", fontSize = 12.sp)
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun Preview() {
-    FitnessAssistantTheme(darkTheme = false) {
-        HealthAppWithNavigation()
     }
 }
